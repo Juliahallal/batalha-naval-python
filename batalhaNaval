@@ -1,0 +1,201 @@
+import random
+from colorama import Fore, Back, Style, init
+
+init()  
+    
+def salvaPontuacao(nome, pontuacao):
+    with open("pontuacoes.txt", "a") as file:
+        file.write(f"{nome}:{pontuacao}\n")
+        
+        
+def ranking():
+    try:
+        with open("pontuacoes.txt", "r") as file:
+            pontuacoes = file.readlines()
+    except FileNotFoundError:
+        print("Ainda não há pontuações registradas.")
+        return
+
+    pontuacoes = [linha.strip().split(":") for linha in pontuacoes]
+    pontuacoes = [(nome, int(pontos)) for nome, pontos in pontuacoes]
+
+    pontuacoes.sort(key=lambda x: -x[1])  
+
+    print("Ranking dos jogadores:")
+    for i, (nome, pontos) in enumerate(pontuacoes):
+        print(f"{i + 1}. {nome} - {pontos} pontos")
+    
+
+def regras():
+    print("Regras do jogo: temos um tabuleiro tamanho 10 x 10. O computador irá sortear a posição das embarcações. Você terá 60 tiros para tentar derrubar todas as embarcações do computador. Atenção! As embarcações são de tamanhos e cores diferentes.")
+    print(Fore.RED + Back.RED + "P" + Style.RESET_ALL + " - Porta-Aviões (4 espaços)")
+    print(Fore.GREEN + Back.GREEN + "B" + Style.RESET_ALL + " - Barcos (3 espaços cada)")
+    print(Fore.YELLOW + Back.YELLOW + "S" + Style.RESET_ALL + " - Submarinos (2 espaços cada)")
+    print()
+    print("Quantidade total de embarcações no jogo:")
+    print(f"Porta-Aviões: {numPorta}")
+    print(f"Barcos: {numBarco}")
+    print(f"Submarinos: {numSubmar}")
+    print()
+
+nomeJogador = input("Digite seu nome: ")
+
+numPorta = 1
+numBarco = 2
+numSubmar = 3
+
+def jogar(tabuleiroVisivel):
+    while True:
+        try:
+            linha = int(input("Escolha a linha para atirar (0-9): "))
+            coluna = int(input("Escolha a coluna para atirar (0-9): "))
+            
+            if linha < 0 or linha > 9 or coluna < 0 or coluna > 9:
+                print("Valor inválido. Por favor, escolha entre 0 e 9.")
+                continue
+            
+            if tabuleiroVisivel[linha][coluna] != '0':
+                print("Você já atirou nesse quadrante. Escolha uma posição diferente.")
+                continue
+            
+            break
+        except ValueError:
+            print("Valor inválido. Por favor, escolha entre 0 e 9.")
+    
+    return linha, coluna
+
+def mostrarTabuleiro(tabuleiroVisivel):
+    print( "  " + " ".join(map(str, range(10))))  # num de coluna 
+    for index, linha in enumerate(tabuleiroVisivel):
+        print(f"{index} ", end="")  # num da linha no inicio de cada linha
+        for celula in linha:
+            if celula == '0':
+                print("O", end=" ")
+            elif celula == '-':
+                print(Fore.BLUE + "-" + Style.RESET_ALL, end=" ")
+            elif celula == 'P':
+                print(Back.RED + Fore.WHITE + "P" + Style.RESET_ALL, end=" ")
+            elif celula == 'B':
+                print(Back.GREEN + Fore.WHITE + "B" + Style.RESET_ALL, end=" ")
+            elif celula == 'S':
+                print(Back.YELLOW + Fore.BLACK + "S" + Style.RESET_ALL, end=" ")
+        print()
+
+tabuleiro = [[0 for _ in range(10)] for _ in range(10)] 
+tabuleiroVisivel = [['0' for _ in range(10)] for _ in range(10)]  
+
+def posicaoPortaAv(tabuleiro):
+    while True:
+        orientacao = random.choice(["horizontal", "vertical"])
+        
+        if orientacao == "horizontal":
+            linha = random.randint(0, 6)
+            coluna = random.randint(0, 9)
+        else:
+            linha = random.randint(0, 9)
+            coluna = random.randint(0, 6)
+        
+        if all(tabuleiro[linha+i][coluna] == 0 for i in range(4)) if orientacao == "horizontal" else all(tabuleiro[linha][coluna+i] == 0 for i in range(4)):
+            for i in range(4):
+                if orientacao == "horizontal":
+                    tabuleiro[linha+i][coluna] = 1
+                else:
+                    tabuleiro[linha][coluna+i] = 1
+            break
+    return tabuleiro
+
+
+def posicaoBarco(tabuleiro):
+    while True:
+        orientacao = random.choice(["horizontal", "vertical"])
+
+        if orientacao == "horizontal":
+            linha = random.randint(0, 7)
+            coluna = random.randint(0, 9)
+        else:
+            linha = random.randint(0, 9)
+            coluna = random.randint(0, 7)
+
+        if all(tabuleiro[linha+i][coluna] == 0 for i in range(3)) if orientacao == "horizontal" else all(tabuleiro[linha][coluna+i] == 0 for i in range(3)):
+            for i in range(3):
+                if orientacao == "horizontal":
+                    tabuleiro[linha+i][coluna] = 2
+                else:
+                    tabuleiro[linha][coluna+i] = 2
+            break
+    return tabuleiro
+
+
+def posicaoSubmarino(tabuleiro):
+    while True:
+        orientacao = random.choice(["horizontal", "vertical"])
+
+        if orientacao == "horizontal":
+            linha = random.randint(0, 8)
+            coluna = random.randint(0, 9)
+        else:
+            linha = random.randint(0, 9)
+            coluna = random.randint(0, 8)
+
+        if all(tabuleiro[linha+i][coluna] == 0 for i in range(2)) if orientacao == "horizontal" else all(tabuleiro[linha][coluna+i] == 0 for i in range(2)):
+            for i in range(2):
+                if orientacao == "horizontal":
+                    tabuleiro[linha+i][coluna] = 3
+                else:
+                    tabuleiro[linha][coluna+i] = 3
+            break
+    return tabuleiro
+
+# posicionando as embarcacoes
+for _ in range(numPorta):
+    tabuleiro = posicaoPortaAv(tabuleiro)
+for _ in range(numBarco):
+    tabuleiro = posicaoBarco(tabuleiro)
+for _ in range(numSubmar):
+    tabuleiro = posicaoSubmarino(tabuleiro)
+
+totalPortaAv = numPorta * 4
+totalBarc = numBarco * 3 
+totalSub = numSubmar * 2  
+
+def atirar(linha, coluna, tabuleiro, tabuleiroVisivel):
+    global totalPortaAv, totalBarc, totalSub
+
+    if tabuleiro[linha][coluna] == 0:
+        tabuleiroVisivel[linha][coluna] = '-'
+    elif tabuleiro[linha][coluna] == 1:
+        tabuleiroVisivel[linha][coluna] = 'P'
+        totalPortaAv -= 1
+    elif tabuleiro[linha][coluna] == 2:
+        tabuleiroVisivel[linha][coluna] = 'B'
+        totalBarc -= 1
+    elif tabuleiro[linha][coluna] == 3:
+        tabuleiroVisivel[linha][coluna] = 'S'
+        totalSub -= 1
+    return tabuleiroVisivel
+
+
+regras()
+mostrarTabuleiro(tabuleiroVisivel)  # tab inicial 
+
+contagem = 60
+
+for i in range(60):
+    linha, coluna = jogar(tabuleiroVisivel)
+    tabuleiroVisivel = atirar(linha, coluna, tabuleiro, tabuleiroVisivel)
+    mostrarTabuleiro(tabuleiroVisivel)
+    contagem = contagem-1
+   
+    # verificando se todas as embarcações foram atingidas
+    if totalPortaAv == 0 and totalBarc == 0 and totalSub == 0:
+        print(f"Parabéns {nomeJogador}! Você conseguiu derrubar as embarcações com {60 - contagem} tiros.")
+        pontuacao = 60 - contagem
+        salvaPontuacao(nomeJogador, pontuacao)
+        break
+else:
+    print(f"Que pena, {nomeJogador}. Você não conseguiu derrubar as embarcações com os seus 60 tiros.")
+   
+    
+ranking()
+
+# Jogo desenvolvido por Júlia Pereira Hallal para a cadeira de Algorítimos e Estrutura de Dados I
